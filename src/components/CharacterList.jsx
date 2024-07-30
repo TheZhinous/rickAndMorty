@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { Children, useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 
 function CharacterList({ characters, onSelectedId, selectedId }) {
@@ -6,12 +6,11 @@ function CharacterList({ characters, onSelectedId, selectedId }) {
     <div className="characters-list">
       {characters.map((character) => {
         return (
-          <Charcter
-            item={character}
-            key={character.id}
-            onSelectedId={onSelectedId}
-            selectedId={selectedId}
-          />
+          <Character item={character} key={character.id}>
+            <button className="icon red" onClick={() => onSelectedId(character.id)}>
+              {selectedId == character.id ? <EyeSlashIcon /> : <EyeIcon />}
+            </button>
+          </Character>
         );
       })}
     </div>
@@ -20,20 +19,18 @@ function CharacterList({ characters, onSelectedId, selectedId }) {
 
 export default CharacterList;
 
-function Charcter({ item, onSelectedId, selectedId }) {
+export function Character({ item, children }) {
   return (
     <div className="list__item">
       <img src={item.image} alt={item.name} />
       <CharacterName item={item} />
       <CharacterInfo item={item} />
-      <button className="icon red" onClick={() => onSelectedId(item.id)}>
-        {selectedId == item.id ? <EyeSlashIcon /> : <EyeIcon />}
-      </button>
+      {children}
     </div>
   );
 }
 
-function CharacterName({ item }) {
+export function CharacterName({ item }) {
   return (
     <h3 className="name">
       {item.gender == "Male" ? "👨 " : " 👩 "}
@@ -42,7 +39,7 @@ function CharacterName({ item }) {
   );
 }
 
-function CharacterInfo({ item }) {
+export function CharacterInfo({ item }) {
   return (
     <div className="list-item__info info">
       <span className={item.status == "Alive" ? "status" : "status red"}></span>

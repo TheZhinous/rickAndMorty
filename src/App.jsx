@@ -1,10 +1,11 @@
 import Navbar, { Favorites, Search, SearchResults } from "./components/Navbar";
-import CharacterList from "./components/CharacterList";
+import CharacterList, { Character } from "./components/CharacterList";
 import CharacterDetail from "./components/CharacterDetail.jsx";
 import { useEffect, useState } from "react";
 import Loader from "./components/Loader";
 import { Toaster, toast } from "react-hot-toast";
 import axios from "axios";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 function App() {
   const [characters, setCharacters] = useState([]);
@@ -31,17 +32,22 @@ function App() {
   // fetchData();
 
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
     //*with axios
     async function fetchData() {
       try {
         setIsLoading(true);
         const { data } = await axios.get(
-          `https://rickandmortyapi.com/api/character/?name=${query}`
+          `https://rickandmortyapi.com/api/character/?name=${query}`,
+          { signal }
         );
         setCharacters(data.results.slice(0, 5));
       } catch (error) {
-        setCharacters([]);
-        toast.error(error.response.data.error);
+        if (!axios.isCancel()) {
+          setCharacters([]);
+          toast.error(error.response.data.error);
+        }
       } finally {
         setIsLoading(false);
       }
@@ -51,16 +57,27 @@ function App() {
     //   // setCharacters([]);
     //   return;
     // }
+
     fetchData();
+
+    return () => {
+      controller.abort();
+    };
   }, [query]);
 
   const handleSelectedId = (id) => {
     setSelectedId((prev) => (prev == id ? null : id));
   };
   const handleFavorites = (character) => {
-      setFavorites((prev) => [...prev, character]);
+    setFavorites((prev) => [...prev, character]);
   };
-  const isAddToFavorites = favorites.map(fav=>fav.id).includes(selectedId)
+  const isAddToFavorites = favorites.map((fav) => fav.id).includes(selectedId);
+
+  const handleRemoveFav = (id) => {
+    console.log(id)
+    setFavorites(favorites.filter((fav) => fav.id !== id));
+    
+  }
 
   return (
     <div className="app">
@@ -68,7 +85,13 @@ function App() {
       <Navbar>
         <Search setQuery={setQuery} query={query} />
         <SearchResults numOfResults={characters.length} />
-        <Favorites numOfFavorites={favorites.length} />
+        <Favorites numOfFavorites={favorites.length}>
+          {favorites.map((fav) => (
+            <Character item={fav} key={fav.id}>
+              <TrashIcon className="icon red" onClick={()=>handleRemoveFav(fav.id)} />
+            </Character>
+          ))}
+        </Favorites>
       </Navbar>
       {isLoading ? (
         <Loader />
